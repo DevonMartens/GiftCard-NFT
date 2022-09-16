@@ -86,7 +86,7 @@ ReentrancyGuard {
         TokenIdToBalance[tokenId] +=  amount;
     }
     
-    function burn(address to, uint256 amount, uint tokenId) public onlyRole(SPENDER_ROLE) {
+    function burnForSpecalToken(address to, uint256 amount, uint tokenId) public onlyRole(SPENDER_ROLE) {
         require(tokenId == WhoOwnsTheERC721(msg.sender));
         require(canPurchse(amount) == true);
         _burn(to, amount);
