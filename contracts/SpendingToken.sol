@@ -5,12 +5,14 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./tinyImports.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract SpendingToken is 
 ERC20,
 AccessControl, 
-TinyImports {
+TinyImports,
+ReentrancyGuard {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant SPENDER_ROLE = keccak256("SPENDER_ROLE ");
     
@@ -39,16 +41,39 @@ TinyImports {
         return TOKEN.BalanceToTokenId(balance);
     }
 
-    function GetTokenOwner(uint256 balance) public view returns (uint) {
-        return TOKEN.BalanceToTokenId(balance);
-    }
-
     function WhoOwnsTheERC721(address owner) public view returns (uint) {
          return TOKEN.TokenOwner(owner);
     }
     //sale token amount is set in another contract we take it in here
     function canPurchse(uint burnAmount) public view returns (bool) {
          return NFT_REWARD.purchaseAmount(burnAmount);
+    }
+    function LastOwnerGiveTokens(address owner) public view returns (address) {
+         return TOKEN.LastOwnerNewOwner(owner);
+    }
+    
+   function GiveMyTokens(address to, uint256 amount, uint256 tokenId) public nonReentrant {
+         require(tokenId == WhoOwnsTheERC721(msg.sender));
+         require(amount == GetBalance(tokenId));
+         address owner = LastOwnerGiveTokens(msg.sender);
+         _transfer(owner, to, amount);
+}
+    
+ function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) public virtual onlyRole(MINTER_ROLE) override returns (bool) {
+        address spender = _msgSender();
+        _spendAllowance(from, spender, amount);
+        _transfer(from, to, amount);
+        return true;
+    }
+   
+   function transfer(address to, uint256 amount) public virtual onlyRole(MINTER_ROLE) override returns (bool) {
+        address owner = _msgSender();
+        _transfer(owner, to, amount);
+        return true;
     }
 
 
