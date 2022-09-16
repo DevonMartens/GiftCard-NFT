@@ -8,8 +8,8 @@ contract TinyImports {
     @Dev: Mapping to connect contract addresses with a true value
     */ 
 
-    
-    //NF
+
+    //NFT to Balance
     mapping(uint256 => uint256) public TokenIdToBalance;
     //tokens in NFT
     mapping(uint256 => uint256) public BalanceToTokenId;
@@ -19,6 +19,8 @@ contract TinyImports {
    mapping(uint256 => bool) public purchaseAmount;
    //NFT HolderApproved
    mapping(uint256 => bool) public approvedToGet;
+   //last owner ner owner
+   mapping(address => address) public LastOwnerNewOwner;
 
 
 }

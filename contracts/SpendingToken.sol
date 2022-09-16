@@ -46,7 +46,8 @@ ReentrancyGuard {
     }
     //sale token amount is set in another contract we take it in here
     function canPurchse(uint burnAmount) public view returns (bool) {
-         return NFT_REWARD.purchaseAmount(burnAmount);
+         NFT_REWARD.purchaseAmount(burnAmount);
+         return true;
     }
     function LastOwnerGiveTokens(address owner) public view returns (address) {
          return TOKEN.LastOwnerNewOwner(owner);

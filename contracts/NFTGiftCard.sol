@@ -4,11 +4,11 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
 
 contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
 /*@Dev: The variables below are for the counters to track the token variables and for handling strings.*/
@@ -27,6 +27,7 @@ contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
             _maxPurchase = maxPurchase;
             _maxSupply = maxSupply;
             _price = price;
+            isPreSale = true;
     }
 
     /*@Dev: This is the counter to track tokens.*/
@@ -39,16 +40,30 @@ contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
      uint256 public _maxSupply;
      /*@Dev: This storage for the price of the NFT.*/
      uint256 public _price;
-     
+     /*Dev: Setting for is presale*/
+     bool public isPreSale;
+
+     //event stating sale state is no longer in presale
+     event presale(bool, string);
+    
+
      /*@Dev: These are the errors for reverts.*/
      error INSUFFICENT_FUNDS();
      error USER_PURCHASEMAX_REACHED();
      error MAXSUPPLY_REACHED();
      error INVALID_ADDRESS();
+     error PublicSaleHappingNow();
+     error WaitForPublicSale();
+
 
 
     /*@Dev: This is a aapping to connect token Id token URI.*/
     mapping (uint256 => string) private _tokenURI;
+
+    function setSale(bool CurrentSaleState) public onlyOwner {
+        isPreSale = CurrentSaleState;
+        emit presale(false, "Public_sale_starts_now");
+    }
 
 /*
      @Dev: Function to mint a token to an address via wallet.
@@ -57,16 +72,11 @@ contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
      @Notice: Merkle proof will use the poof and address to determine if it is allowed.
      @Notice: External wallet cannot purchase more than limit set by admin.
      @Dev: The person purchasing the token does not need to pass in the proof we will handle this part for them.
-*/
-
-
-
-
-  function safeMint(uint16 numberOfTokens, bytes32[] memory proof) public payable nonReentrant {
-      if(isValid(proof, keccak256(abi.encodePacked(msg.sender)))) {
-      revert INVALID_ADDRESS();
+*/   function publicMint(uint16 numberOfTokens) public payable nonReentrant {
+      if(isPreSale == true){
+          revert WaitForPublicSale();
       }
-      if(balanceOf(msg.sender) < _maxPurchase) {
+      if((balanceOf(msg.sender) + numberOfTokens) >= _maxPurchase) {
           revert USER_PURCHASEMAX_REACHED();
       }
       if(_tokenIdTracker.current() + numberOfTokens <= _maxSupply)
@@ -76,7 +86,28 @@ contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
       } 
         for(uint16 i = 0; i < numberOfTokens; i++) {
           _safeMint(msg.sender, _tokenIdTracker.current());
-          _tokenIdTracker.increment();
+          _tokenIdTracker.increment();  
+        }
+    }
+
+  function safeMint(uint16 numberOfTokens, bytes32[] memory proof) public payable nonReentrant {
+      if(isPreSale == false){
+          revert PublicSaleHappingNow();
+      }
+      if(isValid(proof, keccak256(abi.encodePacked(msg.sender)))) {
+      revert INVALID_ADDRESS();
+      }
+      if((balanceOf(msg.sender) + numberOfTokens) >= _maxPurchase) {
+          revert USER_PURCHASEMAX_REACHED();
+      }
+      if(_tokenIdTracker.current() + numberOfTokens <= _maxSupply)
+      revert MAXSUPPLY_REACHED();
+      if(msg.value >= _price * numberOfTokens) {
+          revert INSUFFICENT_FUNDS();
+      } 
+        for(uint16 i = 0; i < numberOfTokens; i++) {
+          _safeMint(msg.sender, _tokenIdTracker.current());
+          _tokenIdTracker.increment();  
         }
     }
 
@@ -85,3 +116,4 @@ contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
         return MerkleProof.verify(proof, _root, leaf);
     }
 
+}
