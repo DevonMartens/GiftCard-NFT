@@ -65,6 +65,17 @@ contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
         emit presale(false, "Public_sale_starts_now");
     }
 
+    function delayedReveal(uint256[] calldata tokenIds, string[] calldata uris) external{
+        for (uint i = 0; i < tokenIds.length; i++) {
+        _tokenURI[tokenIds[i]] =  uris[i];
+        }
+        }
+    
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "invalid token ID");
+        return _tokenURI[tokenId];
+    }
+
 /*
      @Dev: Function to mint a token to an address via wallet.
      @Parms: numberOfTokens: The amount of tokens a user wishes to mint to thier wallets.

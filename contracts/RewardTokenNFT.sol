@@ -61,8 +61,19 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports {
      @Notice: External wallet cannot purchase more than limit set by admin.
 */  
 
+    function delayedReveal(uint256[] calldata tokenIds, string[] calldata uris) external{
+        for (uint i = 0; i < tokenIds.length; i++) {
+        _tokenURI[tokenIds[i]] =  uris[i];
+        }
+    }
 
-    function Claim(uint16 numberOfTokens, uint256 tokenIown) public nonReentrant {
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "invalid token ID");
+        return _tokenURI[tokenId];
+    }
+
+
+    function Claim(uint16 numberOfTokens, uint256 tokenIown) external nonReentrant {
       require(ERC721(_TOKEN_ADDRESS).ownerOf(tokenIown) == msg.sender, "INVALID_SENDER");   
       if(balanceOf(msg.sender) < _maxClaim) {
           revert TOKEN_CLAIMED();
