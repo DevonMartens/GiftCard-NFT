@@ -8,9 +8,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "./tinyImports.sol";
 
 
-contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
+contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports {
 /*@Dev: The variables below are for the counters to track the token variables and for handling strings.*/
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -18,113 +19,99 @@ contract NFTGiftCard is ERC721, ReentrancyGuard, Ownable {
         string memory _name, 
         string memory _symbol, 
         uint256 maxSupply,
-        uint256 maxPurchase,
-        bytes32  root, 
-        uint256 price)
+        uint256 maxClaim,
+        address TOKEN_ADDRESS,
+        uint256 burnRequirement
+        )
         ERC721(_name, _symbol)
         {
-            _root = root;
-            _maxPurchase = maxPurchase;
+            _TOKEN_ADDRESS = TOKEN_ADDRESS;
+            _maxClaim = maxClaim;
             _maxSupply = maxSupply;
-            _price = price;
-            isPreSale = true;
+            _burnRequirement = burnRequirement;
+           purchaseAmount[_burnRequirement] = true;
     }
-
     /*@Dev: This is the counter to track tokens.*/
     Counters.Counter public _tokenIdTracker;
-    /*@Dev: This storage for the root.*/
-    bytes32 public _root;
     /*@Dev: This storage for the max tokens a user can buy.*/
-     uint256 public _maxPurchase;
+     uint256 public _maxClaim;
+         /*@Dev: This storage for the max tokens a user can buy.*/
+     uint256 public _burnRequirement;
     /*@Dev: This storage for the maxSupply of tokens*/
      uint256 public _maxSupply;
-     /*@Dev: This storage for the price of the NFT.*/
-     uint256 public _price;
-     /*Dev: Setting for is presale*/
-     bool public isPreSale;
-
-     //event stating sale state is no longer in presale
-     event presale(bool, string);
-    
+     /*@Dev: This storage for Original NFT.*/
+     address public _TOKEN_ADDRESS;
 
      /*@Dev: These are the errors for reverts.*/
-     error INSUFFICENT_FUNDS();
-     error USER_PURCHASEMAX_REACHED();
+     error TOKEN_CLAIMED();
      error MAXSUPPLY_REACHED();
-     error INVALID_ADDRESS();
-     error PublicSaleHappingNow();
-     error WaitForPublicSale();
-
+     error BURN_YOUR_SPENDER_TOKENS();
+     error NOT_YOUR_TOKEN();
 
 
     /*@Dev: This is a aapping to connect token Id token URI.*/
     mapping (uint256 => string) private _tokenURI;
+    //storage for original token address
+     //storage for token address 
+     TinyImports TOKEN = TinyImports(_TOKEN_ADDRESS);
+/*
+     @Dev: Function to mint a token to an address via wallet.
+     @Parms: numberOfTokens: The amount of tokens a user wishes to mint to thier wallets.
+     @Parms: tokenIown is the giftcard NFT.
+     @Notice: External wallet cannot purchase more than limit set by admin.
+*/  
 
-    function setSale(bool CurrentSaleState) public onlyOwner {
-        isPreSale = CurrentSaleState;
-        emit presale(false, "Public_sale_starts_now");
+
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override{
+        require(from == this.ownerOf(tokenId), "INVALID_CALLER");
+        TokenOwner[to] = tokenId;
+         _safeTransfer(from, to, tokenId, "");
+
+    }
+    
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override{
+        require(from == this.ownerOf(tokenId), "INVALID_CALLER");
+        TokenOwner[to] = tokenId;
+         _safeTransfer(from, to, tokenId, "");
+
+    }
+    
+    //the others are overrides to create honesty this one uses less gas though
+    function LegalTransferFrom(address from, address to, uint256 tokenId) external {
+        require(from == this.ownerOf(tokenId), "INVALID_CALLER");
+        TokenOwner[to] = tokenId;
+         _safeTransfer(from, to, tokenId, "");
     }
 
-    function delayedReveal(uint256[] calldata tokenIds, string[] calldata uris) external{
+    function delayedReveal(uint256[] calldata tokenIds, string[] calldata uris) external onlyOwner {
         for (uint i = 0; i < tokenIds.length; i++) {
         _tokenURI[tokenIds[i]] =  uris[i];
         }
-        }
-    
+    }
+
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "invalid token ID");
         return _tokenURI[tokenId];
     }
 
-/*
-     @Dev: Function to mint a token to an address via wallet.
-     @Parms: numberOfTokens: The amount of tokens a user wishes to mint to thier wallets.
-     @Parms: proof: The hashed result of all addresses allowed to make purchases in this contract
-     @Notice: Merkle proof will use the poof and address to determine if it is allowed.
-     @Notice: External wallet cannot purchase more than limit set by admin.
-     @Dev: The person purchasing the token does not need to pass in the proof we will handle this part for them.
-*/   function publicMint(uint16 numberOfTokens) public payable nonReentrant {
-      if(isPreSale == true){
-          revert WaitForPublicSale();
+
+    function Claim(uint16 numberOfTokens, uint256 tokenIown) external nonReentrant {
+      require(ERC721(_TOKEN_ADDRESS).ownerOf(tokenIown) == msg.sender, "INVALID_SENDER");   
+      if(balanceOf(msg.sender) < _maxClaim) {
+          revert TOKEN_CLAIMED();
       }
-      if((balanceOf(msg.sender) + numberOfTokens) >= _maxPurchase) {
-          revert USER_PURCHASEMAX_REACHED();
-      }
-      if(_tokenIdTracker.current() + numberOfTokens <= _maxSupply)
+      if(_tokenIdTracker.current() + numberOfTokens <= _maxSupply){
       revert MAXSUPPLY_REACHED();
-      if(msg.value >= _price * numberOfTokens) {
-          revert INSUFFICENT_FUNDS();
-      } 
+      }
+      if(approvedToGet[tokenIown] = false){
+          revert BURN_YOUR_SPENDER_TOKENS();
+      }
+
         for(uint16 i = 0; i < numberOfTokens; i++) {
           _safeMint(msg.sender, _tokenIdTracker.current());
-          _tokenIdTracker.increment();  
+          _tokenIdTracker.increment();
+          TokenOwner[msg.sender] = _tokenIdTracker.current(); 
         }
-    }
-
-  function safeMint(uint16 numberOfTokens, bytes32[] memory proof) public payable nonReentrant {
-      if(isPreSale == false){
-          revert PublicSaleHappingNow();
-      }
-      if(isValid(proof, keccak256(abi.encodePacked(msg.sender)))) {
-      revert INVALID_ADDRESS();
-      }
-      if((balanceOf(msg.sender) + numberOfTokens) >= _maxPurchase) {
-          revert USER_PURCHASEMAX_REACHED();
-      }
-      if(_tokenIdTracker.current() + numberOfTokens <= _maxSupply)
-      revert MAXSUPPLY_REACHED();
-      if(msg.value >= _price * numberOfTokens) {
-          revert INSUFFICENT_FUNDS();
-      } 
-        for(uint16 i = 0; i < numberOfTokens; i++) {
-          _safeMint(msg.sender, _tokenIdTracker.current());
-          _tokenIdTracker.increment();  
-        }
-    }
-
-    /*@Dev: Checks if an address is allowed to the allowlist.*/
-    function isValid(bytes32[] memory proof, bytes32 leaf) public view returns (bool) {
-        return MerkleProof.verify(proof, _root, leaf);
     }
 
 }
