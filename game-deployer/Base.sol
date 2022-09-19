@@ -118,7 +118,7 @@ uint48 public people;
     if(people => _allowedUsers) {
       revert ALL_BETS_MADE();
     }
-    require(GET(collectionAddress) == "INVALID_TOKEN");
+    require(GET(collectionAddress) == true, "INVALID_TOKEN");
     require(tokenIds.length == _minBet, "ADD_TOKENS");
     for (uint i = 0; i < tokenIds.length; i++) {
       tokenId = tokenIds[i];
@@ -164,6 +164,11 @@ uint48 public people;
       IERC721(orginalAddresses).transferFrom(address(this), account, tokenId);
     }
   }
+
+   function declareWinner() public{
+         Guess[msg.sender]score;
+         Guess[msg.sender]winner;
+      }
 
   /*
   @Dev:Checks if the deployer for the rewards contract deployed the contract producing the token that is being bet.
