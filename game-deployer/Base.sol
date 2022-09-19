@@ -5,6 +5,8 @@ pragma solidity 0.8.4;
 import "./Access.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+
 
 
 contract Games is Ownable, IERC721Receiver, Access, ReEntracyGuard {
