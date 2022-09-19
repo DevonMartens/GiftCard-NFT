@@ -9,9 +9,10 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "./tinyImports.sol";
+import "./Games";
 
 
-contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports {
+contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports, Games {
 /*@Dev: The variables below are for the counters to track the token variables and for handling strings.*/
     using Counters for Counters.Counter;
     using Strings for uint256;

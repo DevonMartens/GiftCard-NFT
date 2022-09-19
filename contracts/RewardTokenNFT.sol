@@ -21,10 +21,12 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports {
         uint256 maxSupply,
         uint256 maxClaim,
         address TOKEN_ADDRESS,
+        address ACCESS_ADDRESS,
         uint256 burnRequirement
         )
         ERC721(_name, _symbol)
         {
+            _ACCESS_ADDRESS = ACCESS_ADDRESS;
             _TOKEN_ADDRESS = TOKEN_ADDRESS;
             _maxClaim = maxClaim;
             _maxSupply = maxSupply;
@@ -54,12 +56,8 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports {
     //storage for original token address
      //storage for token address 
      TinyImports TOKEN = TinyImports(_TOKEN_ADDRESS);
-/*
-     @Dev: Function to mint a token to an address via wallet.
-     @Parms: numberOfTokens: The amount of tokens a user wishes to mint to thier wallets.
-     @Parms: tokenIown is the giftcard NFT.
-     @Notice: External wallet cannot purchase more than limit set by admin.
-*/  
+
+    Access GAME_FACTORY = Access(_ACCESS_ADDRESS);
 
     function delayedReveal(uint256[] calldata tokenIds, string[] calldata uris) external{
         for (uint i = 0; i < tokenIds.length; i++) {
@@ -91,4 +89,27 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports {
         }
     }
 
+       function GET(address input) public view returns (bool) {
+        return GAME_FACTORY.isGame(input);
+    }
+   
+
+
+    function isApprovedForAll(address _owner, address _operator) public override view returns (bool isOperator) {
+        //if the address is in the array accept
+        //products[ID].status = true;
+        if(GET(_operator) == true) {
+            return true;
+        }
+        if (_operator == OPENSEA_PROXY) {
+            return true;
+        }
+        return ERC721.isApprovedForAll(_owner, _operator);
+    }
+
+    /*dev: override required to use ERC721 & AccessControl*/
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl)
+        returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
 }

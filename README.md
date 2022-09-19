@@ -19,13 +19,16 @@ INFURA_PROJECT_ID = Your Project Id Key
 
 This is a gamified gift Card NFT app.
 
-The original contract uses a merkle tree as it's whitelist.
+The NFT contract that sells the NFT's uses a merkle tree for cheaper storage of the whitelist's address.
 
-It is set up so that if a user tries to spend tokens but doesn't have the gift card or doesnt send the gift card with a sale the new holder can come claim.
+This is gamified so it is set up with the ERC-20 contract so that if a user tries to spend tokens but doesn't have the gift card or doesnt send the gift card with a sale the new holder can come claim.
 
-Will eventually be tied to a betting game of sorts. 
+The user can use ERC-20 tokens to buy ERC-721 tokens by burning them.
 
-when burning is set to a new address holders of the "gift card" nft can run to burn it thier ERC20 tokens to go mint. 
+There is a contract that deploys the gambling contracts.
+
+The rewards for these are ERC-20 and ERC-721. 
+
 
 
 Try running some of the following tasks:
