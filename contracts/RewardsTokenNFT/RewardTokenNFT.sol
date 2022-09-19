@@ -88,13 +88,13 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, Ownable, TinyImports {
           _tokenIdTracker.increment();  
         }
     }
-
+    /*
+    @Dev:Checks if the game deployer deployed a contract address. If yes it can move those tokens.
+    */
        function GET(address input) public view returns (bool) {
         return GAME_FACTORY.isGame(input);
     }
    
-
-
     function isApprovedForAll(address _owner, address _operator) public override view returns (bool isOperator) {
         //if the address is in the array accept
         //products[ID].status = true;

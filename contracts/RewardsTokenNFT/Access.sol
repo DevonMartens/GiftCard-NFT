@@ -11,6 +11,8 @@ contract Access {
     
     
     mapping(address => bool) public isGames;
+//will use to check if address is rewards when deployer is created
+    mapping(address => bool) public isRewards;
 
 
 }

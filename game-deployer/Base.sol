@@ -2,11 +2,14 @@
 
 pragma solidity 0.8.4;
 
+import "./Access.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-contract Games is Ownable, IERC721Receiver {
+contract Games is Ownable, IERC721Receiver, Access, ReEntracyGuard {
 
-  uint256 public totalStaked;
+  uint256 public totalBet;
   
   // struct to store a token, that has been placed as a bet by the owner.
   struct Bet {
@@ -23,6 +26,7 @@ contract Games is Ownable, IERC721Receiver {
   //storage for errors
   error IN_VAULT();
   error GAME_IN_PROGRESS_ALREADY();
+  error BETS_PLACED();
 
   //storage for variable setting game start time
   uint48 _gameStart;
@@ -39,16 +43,22 @@ contract Games is Ownable, IERC721Receiver {
   mapping(address => bool) public player; 
 
 
-
-   constructor(uint48 gameStart) {
-        gameStart = uint48 _gameStart;
-        minBet = uint48 _minBet;
+   constructor(uint48 gameStart, _minBet) {
+        gameStart =  _gameStart;
+        minBet = _minBet;
 
   }
-   /*Dev: Inputs address of NFT to bet*/
+   /*
+   @Dev: Inputs address of NFT to bet and token Ids.
+   @Notice: To play games with large bets you need to obtain a lot of tokens from one contract.
+   */
   function bet(uint256[] calldata tokenIds, address calldata collectionAddress) external nonRenentrant {
     uint256 tokenId;
-    totalStaked += tokenIds.length;
+    totalBet += tokenIds.length;
+    if(player[msg.sender] = true) {
+      revert BETSPLACED();
+    }
+    require(GET(collectionAddress) == "INVALID_TOKEN");
     require(tokenIds.length == _minBet, "ADD_TOKENS");
     for (uint i = 0; i < tokenIds.length; i++) {
       tokenId = tokenIds[i];
@@ -60,7 +70,7 @@ contract Games is Ownable, IERC721Receiver {
           GAME_IN_PROGRESS_ALREADY();
       }
 
-      IERC721(collectionAddress(msg.sender, address(this), tokenId);
+      IERC721(collectionAddress).transferFrom(msg.sender, address(this), tokenId);
       emit NFTAdded(msg.sender, tokenId, block.timestamp);
 
       vault[tokenId] = Bet({
@@ -68,7 +78,7 @@ contract Games is Ownable, IERC721Receiver {
         tokenId: uint24(tokenId),
         timestamp: uint48(block.timestamp)
       });
-      player
+      player[msg.sender] = true;
     }
   }
 
@@ -83,6 +93,14 @@ contract Games is Ownable, IERC721Receiver {
       IERC721(orginalAddresses).transferFrom(address(this), account, tokenId);
     }
   }
+  /*
+  @Dev:Checks if the deployer for the rewards contract deployed the contract producing the token that is being bet.
+  @Notice: If yet the token can be placed as a bet.
+  */
+  function GET(address input) public view returns (bool) {
+        return REWARD_FACTORY.isReward(input);
+    }
+   
 
   function onERC721Received(
         address,
@@ -95,4 +113,5 @@ contract Games is Ownable, IERC721Receiver {
     }
   
 }
+
 

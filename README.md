@@ -25,7 +25,7 @@ This is gamified so it is set up with the ERC-20 contract so that if a user trie
 
 The user can use ERC-20 tokens to buy ERC-721 tokens by burning them.
 
-There is a contract that deploys the gambling contracts.
+There is a contract that deploys the game contracts  this contract allows users to bet thier NFTs.
 
 The rewards for these are ERC-20 and ERC-721. 
 
