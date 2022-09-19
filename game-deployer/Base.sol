@@ -3,15 +3,18 @@
 pragma solidity 0.8.4;
 
 import "./Access.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 
 
-contract Games is Ownable, IERC721Receiver, Access, ReEntracyGuard {
+contract Games is AccessControl, IERC721Receiver, Access, ReEntracyGuard {
 
   uint256 public totalBet;
+
+  //number of people in a game
+  uint48 public people;
   
   // struct to store a token, that has been placed as a bet by the owner.
   struct Bet {
@@ -21,7 +24,7 @@ contract Games is Ownable, IERC721Receiver, Access, ReEntracyGuard {
   }
 // struct to store a token, that has been placed as a bet by the owner.
   struct Game {
-    bytes32 sport;
+    bytes32 gameType;
     uint48 score;
     bytes32 winner;
   }
@@ -29,14 +32,16 @@ contract Games is Ownable, IERC721Receiver, Access, ReEntracyGuard {
   error IN_VAULT();
   error GAME_IN_PROGRESS_ALREADY();
   error BETS_PLACED();
+  error ALL_BETS_MADE();
 
   //storage for variable setting game start time
   uint48 _gameStart;
   uint48 _minBet;
+  uint48 _allowedUsers;
 
   event NFTAdded(address owner, uint256 tokenId, uint256 value);
   event NFTRemoved(address owner, uint256 tokenId, uint256 value);
-//   event Claimed(address owner, uint256 amount);
+
 
 
   // maps tokenId to Bet
@@ -44,21 +49,32 @@ contract Games is Ownable, IERC721Receiver, Access, ReEntracyGuard {
 // mapping to allow those who have placed bets to set a struct on what they want to bet
   mapping(address => bool) public player; 
 
+ //maps user to thier result of game guess
+  mapping(address => Game) public Guess; 
+  
+  /*
+  @Dev: This will not have value until set i.e. 0 address
+  */
+  
+  address public confirmedWinner;
 
-   constructor(uint48 gameStart, _minBet) {
+   constructor(uint48 gameStart, uint48 _minBet, uint48 allowedUsers) {
         gameStart =  _gameStart;
         minBet = _minBet;
-
+        allowedUsers = _allowedUsers;
   }
    /*
    @Dev: Inputs address of NFT to bet and token Ids.
    @Notice: To play games with large bets you need to obtain a lot of tokens from one contract.
    */
-  function bet(uint256[] calldata tokenIds, address calldata collectionAddress) external nonRenentrant {
+  function bet(uint256[] calldata tokenIds, address calldata collectionAddress, bytes32 game, uint48 score, bytes32 winner) external nonRenentrant {
     uint256 tokenId;
     totalBet += tokenIds.length;
     if(player[msg.sender] = true) {
       revert BETSPLACED();
+    }
+    if(people => _allowedUsers) {
+      revert ALL_BETS_MADE();
     }
     require(GET(collectionAddress) == "INVALID_TOKEN");
     require(tokenIds.length == _minBet, "ADD_TOKENS");
@@ -80,7 +96,13 @@ contract Games is Ownable, IERC721Receiver, Access, ReEntracyGuard {
         tokenId: uint24(tokenId),
         timestamp: uint48(block.timestamp)
       });
+        Guess[msg.sender] = Game({
+          gameType: game;
+         score: score;
+         winner: winner;
+      });
       player[msg.sender] = true;
+      people++;
     }
   }
 
