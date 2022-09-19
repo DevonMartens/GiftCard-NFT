@@ -58,9 +58,9 @@ contract GambleFactory is AccessControl, Access {
     @Notice: It takes all the addresses and pushes them into an array and a mapping.
     */   
 
-    function DeployGame(uint48 startBlock, uint48 minNFTBet, bytes32 game, uint48 numPlayers) public onlyRole(MINTER_ROLE) {
+    function DeployGame(uint48 startBlock, uint48 minNFTBet, bytes32 game, uint48 numPlayers, uint48 votes) public onlyRole(MINTER_ROLE) {
         gameContract = new Game();
-        address newContract = address(new Game(startBlock, minNFTBet, game, numPlayers));
+        address newContract = address(new Game(startBlock, minNFTBet, game, numPlayers, votes));
         DeployedGamesAddresses.push(newContract);
          isGame[newContract] =  true;
         }

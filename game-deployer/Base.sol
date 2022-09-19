@@ -36,6 +36,13 @@ uint48 public people;
     bytes32 winner;
   }
 
+/*@Dev: Admin adds the outcome.*/ 
+    uint48 public Adminscore;
+    bytes32 public Adminwinner;
+
+    bool adminIsCorrect = false;
+
+
 /**  
 ================================================
 |             Storage for Errors              |
@@ -46,6 +53,7 @@ uint48 public people;
   error GAME_IN_PROGRESS_ALREADY();
   error BETS_PLACED();
   error ALL_BETS_MADE();
+  error PLAYERS_MUST_VOTE();
 
 /**  
 ================================================
@@ -59,6 +67,10 @@ uint48 public people;
   uint48 public _minBet;
   /*@Dev: Storage for number of people allowed to play in a game.*/
   uint48 public _allowedUsers;
+  /*@Dev: Storage for needed votes to confirm game end.*/
+  uint48 public _neededVotes;
+   /*@Dev: Storage for needed votes to confirm game end.*/
+  uint48 public _totalVotes;
   /*@Dev: Storage for game type.*/
   bytes32 public _game; 
     /*
@@ -87,9 +99,13 @@ uint48 public people;
   mapping(uint256 => Bet) public vault; 
 // mapping to allow those who have placed bets to set a struct on what they want to bet
   mapping(address => bool) public player; 
+  // mapping to check if user voted
+  mapping(address => bool) public voted; 
 
  //maps user to thier result of game guess
   mapping(address => Game) public Guess; 
+
+
   
 
    constructor(uint48 gameStart, uint48 _minBet, bytes32 game, uint48 allowedUsers) {
@@ -97,6 +113,7 @@ uint48 public people;
         minBet = _minBet;
         game = _game;
         allowedUsers = _allowedUsers;
+        neededVotes = _neededVotes;
   }
 
 /**  
@@ -164,12 +181,37 @@ uint48 public people;
       IERC721(orginalAddresses).transferFrom(address(this), account, tokenId);
     }
   }
+  /*
+  @Dev:Checks if the deployer for the rewards contract deployed the contract producing the token that is being bet.
+  @Notice: If yet the token can be placed as a bet.
+  */
 
-   function declareWinner() public{
-         Guess[msg.sender]score;
-         Guess[msg.sender]winner;
+   function IamWinner() external nonRenetrant{
+         require(timepstamp.now > endGame);
+         if(adminIsCorrect == false){
+           revert PLAYERS_MUST_VOTE();
+         }
+         Guess[msg.sender]score == Adminscore;
+    
+         Guess[msg.sender]winner === Adminwinner;
       }
+    
+    function endGame(uint48 finalScore, bytes32 finalWinner) external onlyRole(MINTER_ROLE){
+    require(timepstamp.now > endGame, "GAME_IN_PROGRESS");
+    finalScore = AdminScore;
+    finalWinner = AdminWinner;
+    }
+ 
+    function playersConfirm() external nonRentrant{
+      require(player[msg.sender] == true, "NOT_IN_GAME");
+      require(voted[msg.sender] == false, "CANNOT_VOTE_TWICE");
+      totalVotes++;
+      if(totalVotes == _needVotes){
+        adminIsCorrect == true;
+      }
+      
 
+    }
   /*
   @Dev:Checks if the deployer for the rewards contract deployed the contract producing the token that is being bet.
   @Notice: If yet the token can be placed as a bet.
