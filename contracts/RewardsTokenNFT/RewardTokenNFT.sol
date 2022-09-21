@@ -35,6 +35,12 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, AccessControl, TinyImports {
            _grantRole(ADMIN_ROLE, 0xce1dfc3F67B028Ed19a97974F8cD2bAF6fba1672);
            _grantRole(MINTER_ROLE, 0xce1dfc3F67B028Ed19a97974F8cD2bAF6fba1672);
     }
+/**  
+================================================
+|                STORGAGE VARIABLES            |
+================================================
+**/    
+
     /*@Dev: This is the counter to track tokens.*/
     Counters.Counter public _tokenIdTracker;
     /*@Dev: This storage for the max tokens a user can buy.*/
@@ -68,7 +74,13 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, AccessControl, TinyImports {
     /*@Dev: Storage for game factory address*/
     Access GAME_FACTORY = Access(_ACCESS_ADDRESS);
     event revealed(uint256[] tokenIds);
-    
+
+/**  
+================================================
+|          TOKEN METADATA FUNCTIONS             |
+================================================
+**/ 
+
     /*
     @Dev: This is the function for the delayed reveal of the NFT's. Will implement VRF in future.
     @Params: tokenIds are the tokens that are being revealed uris are the URIs.
@@ -88,6 +100,11 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, AccessControl, TinyImports {
         return _tokenURI[tokenId];
     }
 
+/**  
+================================================
+|              MINTING FUNCTIONS               |
+================================================
+**/
         
     /*
     @Dev: Function to claim tokens if user has burned enough ERC20 to earn them.
@@ -113,6 +130,12 @@ contract NFTRewardClaim is ERC721, ReentrancyGuard, AccessControl, TinyImports {
           _tokenIdTracker.increment();  
         }
     }
+
+/**  
+================================================
+|    IS APPROVED FOR ALL FUNCTIONALITY         |
+================================================
+**/
     /*
     @Dev:Checks if the game deployer deployed a contract address. If yes it can move those tokens.
     */
