@@ -123,7 +123,7 @@ uint48 public people;
 **/
 
    /*
-   @Dev: Inputs address of NFT to bet and token Ids.
+   @Dev: Inputs address of NFT to bet and token Ids then the users guess as to who will win the game..
    @Notice: To play games with large bets you need to obtain a lot of tokens from one contract.
    */
   function bet(uint256[] calldata tokenIds, address calldata collectionAddress, uint48 score, bytes32 winner) external nonRenentrant {
